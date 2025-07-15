@@ -5,7 +5,6 @@ from src.util import operator_norm
 
 
 
-
 class RandomParameterGenerator:
     def __init__(self):
         pass
@@ -41,7 +40,5 @@ class RandomParameterGenerator:
         """Normalize tree variance values."""
         coef = operator_norm(tree.cov_matrix())
         tree.set_var([a / coef for a in tree.get_var()])
-        # fo_seed = [random.randrange(0, 20) for _ in range(tree.num())]
-        # tree.random_fo(fo_seed)
         assert(abs(operator_norm(tree.cov_matrix()) - 1) < 1e-6)
         return tree

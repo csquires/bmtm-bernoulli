@@ -5,7 +5,6 @@ Handles loading and merging of configuration files.
 import os
 import yaml
 from typing import Dict, Any, Optional
-from pathlib import Path
 
 
 class ConfigManager:

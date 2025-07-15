@@ -12,72 +12,9 @@ EPSILON = 1e-6
 
 LOW_NUMBER = -999999
 
-def rf(a, b):
-    ass = a.get_splits()
-    bss = b.get_splits()
-
-    return sum(int(s not in bss) for s in ass) + sum(int(s not in ass) for s in bss)
-
-def in_tree(line):
-    pre, vari, data, labels = (list(map(f, a.split(','))) 
-        for a, f in zip(line.split('\t'), [int, float, float, int]))
-    t = Tree()
-    t.make_prefix(pre)
-    t.set_var(vari)
-    t.set_data(data)
-    t.set_labels(labels)
-    return t 
-
-def average_tree_percent_zero(gen):
-    num_trees = 1
-    sumt = [1 if a < 1e-7 else 0 for a in next(gen).get_var()]
-    for t in gen:
-        sumt = [s+(1 if a < 1e-7 else 0) for s, a in zip(sumt, t.get_var())]
-        num_trees += 1
-    nt = Tree()
-    nt.make_prefix(t.get_prefix())
-    nt.set_var([s/num_trees for s in sumt])
-    return nt
-
-def average_tree(gen):
-    num_trees = 1
-    sumt = next(gen).get_var()
-    for t in gen:
-        sumt = [s+a for s, a in zip(sumt, t.get_var())]
-        num_trees += 1
-    nt = Tree()
-    nt.make_prefix(t.get_prefix())
-    nt.set_var([s/num_trees for s in sumt])
-    return nt
 
 def box(x, y, width):
     return (x-width/2, y, x+width/2, y+width)
-
-def bhv_distance_owens(t1, t2, fh='tmpbhv.txt'):
-    input = t1.newick() + '\n' + t2.newick()
-    #print('input')
-    #print(input)
-    with open(fh, 'w') as f:
-        f.write(input)
-    cmd = 'java -jar jj.jar -o /dev/stdout {}'.format(fh)
-    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-
-    comps = output.decode().strip().split()
-    print(comps)
-
-    return float(comps[-1])
-
-def bhv_distance_owens_list(ts, fh='tmpbhv.txt'):
-    input = '\n'.join(ts)
-    with open(fh, 'w') as f:
-        f.write(input)
-    cmd = 'java -jar jj.jar -o /dev/stdout {}'.format(fh)
-    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-
-    comps = [line.strip().split() for line in output.decode().strip().split('\n')]
-    return [float(c[-1]) for c in comps]
 
 
 def gaussian_likelihood(m, s):
@@ -87,6 +24,7 @@ def gaussian_likelihood(m, s):
     tr = -np.trace(np.matmul(s, inv))
     score = detlog + tr
     return score
+
 
 class Tree:  
     ''' Recusive BMTM datastructure
@@ -149,16 +87,6 @@ class Tree:
             ans.extend(c.get_var())
         return ans
     
-    def random_fo(self, seed):
-        count = 1
-        if len(self.children) > 0:
-            zero_index = seed[0] % len(self.children)
-            self.children[zero_index].above_var = 0
-            for c in self.children:
-                count += c.random_fo(seed[count:]) 
-
-        return count
-
     def sample_data(self, mean=0):
         newmean = np.random.normal(loc=mean, scale=math.sqrt(self.above_var))
         #newmean = np.random.uniform(low=mean-math.sqrt(self.above_var), high=mean+math.sqrt(self.above_var))
@@ -441,195 +369,9 @@ class Tree:
     
     def is_fully_observed(self, eps=EPSILON):
         return self.is_observed_node(eps) and all(c.is_fully_observed() for c in self.children)
-    
 
     def zero_pattern(self):
         p = (self.above_var < EPSILON,)
         for c in self.children:
             p += c.zero_pattern()
         return p
-
-    def fo(list_nodes):
-        if len(list_nodes) == 0:
-            return []
-        return ([a + b
-            for a in list_nodes[0].gen_r()
-                for b in fo(list_nodes[1:])]
-        + [a + b
-            for a in list_nodes[0].gen_u()
-                for b in fo(list_nodes[1:])])
-    
-    def gen_t(self):
-        return self.gen_r() + self.gen_u()
-
-    def gen_r(self):
-        if len(self.children) == 0:
-            return ((False,),)
-        return [b + a + c
-            for i, c in enumerate(self.children)
-                for a in c.gen_r()
-                    for b in fo(self.children[:i]) 
-                        for c in fo(self.children[i+1:])]
-
-    def gen_u(self):
-        if len(self.children) == 0:
-            return tuple()
-        return fo(self.children)
-
-import time
-
-def s(xs, vs):
-    print(xs, vs)
-    n = 1#len(xs)
-    print(n)
-    sig = 1/(sum(1/v for v in vs))
-    '''return np.log(
-        1/((2*math.pi)**((n-1)/2))
-        *math.sqrt(sig)/math.prod(math.sqrt(v) for v in vs)
-        *math.exp(
-            (1/2)*sig*((sum(x/v for x, v in zip(xs, vs)))**2) 
-            - (1/2)*sum((x**2)/v for x, v in zip(xs, vs))))
-    '''
-    '''return (np.log(1) - ((n-1)/2)*np.log(((2*math.pi)))
-        +(1/2)*np.log(sig)
-        -(1/2)*np.log(math.prod(vs))
-        + (1/2)*sig*((sum(x/v for x, v in zip(xs, vs)))**2)
-        - (1/2)*sum((x**2)/v for x, v in zip(xs, vs)))
-    '''
-    mu = (sum(x/v for x, v in zip(xs, vs)))*sig
-    print('ok',
-            sum((x**2)/v for x, v in zip(xs, vs))
-            - mu**2/sig
-        )
-    return (((1-n)/2)*np.log(((2*math.pi)))
-        +(1/2)*np.log(sig)
-        -(1/2)*np.log(math.prod(vs))
-        - (1/2)*(
-            sum((x**2)/v for x, v in zip(xs, vs))
-            - mu**2/sig)
-        )
-
-if __name__ == '__main__':
-    tree = Tree()
-    tree.top = None
-    tree.make_prefix([2, 0, 0, 2, 0, 0])
-    tree.set_data([1, 2, 5, 4])
-    assert(tree.is_fully_observed())
-    print(tree.likelihood())
-    print(tree.get_var())
-    assert(False)
-
-    for i in range(0, 10):
-        tree = Tree()
-        tree.top = i
-        tree.make_prefix([2, 0, 0, 2, 0, 0])
-        tree.set_data([1, 2, 0.1, 4])
-        assert(tree.is_fully_observed())
-        print(tree.mle(method='differential_evolution'))
-        print('MADE IT')
-
-    tree = Tree()
-    tree.top = 0
-    tree.make_prefix([0, 0])
-    tree.set_data([1, 2])
-    print(tree.mle(method='differential_evolution'))
-    assert(False)
-
-    tree = Tree()
-    p = 3
-    tree.make_prefix([0]*p)
-    d = list(np.random.normal(size=(p,)))
-    tree.set_data(d)
-    v = [0.00001]+[abs(a) for a in np.random.normal(size=(p+1,))][1:]
-    tree.set_var(v)
-    print(tree.likelihood())
-    print(s([0]+d, v))
-    print(s([0]+d+[2], v+[2])/s([0]+d, v))
-    assert(False)
-    print(tree.mle(method='differential_evolution'))
-    tree = Tree()
-    tree.make_prefix([0, 0, 0, 0])
-    tree.set_data([0.95, 1, 2, 4])
-    print(tree.mle(method='differential_evolution'))
-    assert(False)
-    #data = [-0.5, 3, 4]
-
-    '''for i in range(100):
-        data = list(np.random.normal(size=(3,)))
-        tree.set_data(data)
-
-        tree.top = abs(list(np.random.normal(size=(1,)))[0])
-        tree.mle(method='differential_evolution')
-        sl = tree.likelihood()
-        print(sl, tree.get_var())
-
-        var = tree.get_var()
-        if 0 in list(var):
-            continue
-        var[0] = 0
-        tree.set_var(var)
-        nl = tree.likelihood()
-        print(nl, nl > sl, tree.get_var())
-        if nl <= sl:
-            raise ValueError('Did not improve')
-    '''
-
-
-    data = [-1, 1]
-    tree.set_data(data)
-    tree.set_var([0.5, 0.5, 0.5])
-    #tree.set_var([0, 1, 1])
-    print(tree.likelihood())
-    
-    #var = [0.5190013868567017, 0.07556557282991373, 0.4716822586090975, 0.7244937043066909] 
-    tree.top = 0.5
-    tree.mle(method='differential_evolution')
-    print(tree.get_var())
-    var = [0.5, 1, 1.5**2]
-    tree.set_var(var)
-    print(tree.likelihood())
-    sl = tree.likelihood()
-    print('none', sl)
-    for i in range(len(var)):
-        var2 = list(var)
-        var2[i] = 0
-        tree.set_var(var2)
-        print(i, tree.likelihood())
-    for i in range(len(var)):
-        var2 = list(var)
-        var2[i] += .1
-        tree.set_var(var2)
-        nl = tree.likelihood()
-        print(i, nl, nl > sl)
-    for i in range(len(data)):
-        var2 = [data[i]**2] + [(data[j]-data[i])**2 for j in range(len(data))]
-        tree.set_var(var2)
-        print(i, tree.likelihood())
-
-    '''top = 0.5190013868567017
-    #tree.mle(method='differential_evolution')
-    #print(tree.likelihood(), tree.get_var())
-    #var = [top] + [(math.sqrt(top)-d)**2 for d in data]
-    #var = [0.5190013868567017, 7.400671421698864, 5.196496334593458, 10.755661317172377]
-    var = [0.5190013868567017, 4.714107400797064, 9.021789737166483, 15.883258486743134]
-    print(var)
-    #var = [0.5190013868567017, 0.07556557282991373, 0.4716822586090975, 0.7244937043066909] 
-    tree.set_var(var)
-    print(tree.likelihood())
-    #var = [abs(a) for a in np.random.normal(size=(4,))]
-    print(var)
-    tree.set_var(var)
-    sl = tree.likelihood()
-    print('none', sl)
-    for i in range(4):
-        var2 = list(var)
-        var2[i] = 0
-        tree.set_var(var2)
-        print(i, tree.likelihood())
-    for i in range(4):
-        var2 = list(var)
-        var2[i] -= .1
-        tree.set_var(var2)
-        nl = tree.likelihood()
-        print(i, nl, nl > sl)
-    '''

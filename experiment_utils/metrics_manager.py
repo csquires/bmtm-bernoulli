@@ -70,10 +70,6 @@ class MetricsManager:
     
     def _compute_bhv_distances(self, estimated_trees, ground_truths):
         distances = bhv_distance_owens_list(estimated_trees, ground_truths)
-        # distances = []
-        # for i in trange(len(estimated_trees)):
-            # bhv_distance = bhv_distance_owens(estimated_trees[i], ground_truths[i])
-            # distances.append(bhv_distance)
         return distances
     
     def _compute_frob_biases(self, estimated_covs, ground_truth_covs):
