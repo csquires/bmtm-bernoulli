@@ -1,4 +1,4 @@
-from src.baseline_algorithms.subroutines import make_cluster_tree, make_cluster_var
+from src.tree_utils import make_cluster_tree, make_cluster_var
 
 
 def neighbor_joining_algorithm(sample_vector):

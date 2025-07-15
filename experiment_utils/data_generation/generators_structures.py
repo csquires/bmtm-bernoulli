@@ -1,7 +1,7 @@
 import math
 
 from src.tree import Tree
-from src.tree_structures import fat_tree_structures
+from src.tree_utils import fat_tree_structures
 
 
 class RandomStructureGenerator:

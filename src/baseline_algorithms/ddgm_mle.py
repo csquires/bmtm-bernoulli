@@ -1,5 +1,5 @@
 from src.tree import Tree
-from src.tree_structures import long_tree_with_root
+from src.tree_utils import long_tree_with_root
 
 
 def ddgm_mle_algorithm(sample_vector):
