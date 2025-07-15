@@ -9,6 +9,8 @@ metrics_manager = MetricsManager(config)
 metrics_dict = metrics_manager.load_metrics()
 frob_errors_dict = metrics_dict['frob_errors_dict']
 bhv_distances_dict = metrics_dict['bhv_distances_dict']
+frob_biases_dict = metrics_dict['frob_biases_dict']
+frob_variances_dict = metrics_dict['frob_variances_dict']
 
 # === PLOT METRICS ===
 nleaves_list = config.get_sampling_config().get('nleaves_list')
@@ -27,3 +29,16 @@ plot_manager.plot_errorbars(
     filename="bhv_distances.png",
     yscale='log'
 )
+plot_manager = PlotManager(config, ["bmtm-mle", "ddgm-mle"], nleaves_list)
+plot_manager.plot_errorbars(
+    frob_biases_dict, 
+    ylabel="estimator risk (Frobenius bias)", 
+    filename="frob_biases.png",
+    yscale='log'
+)
+# plot_manager.plot_errorbars(
+#     frob_variances_dict, 
+#     ylabel="estimator risk (Frobenius variance)", 
+#     filename="frob_variances.png",
+#     yscale='log'
+# )

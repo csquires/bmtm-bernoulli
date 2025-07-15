@@ -1,5 +1,6 @@
 import numpy as np
 import subprocess
+import os
 
 from src.tree import Tree
 
@@ -8,20 +9,8 @@ def operator_norm(arr):
     return np.linalg.norm(np.array(arr), 2)
 
 
-def bhv_distance_owens(t1: Tree, t2: Tree, fh='tmpbhv.txt'):
-    data = t1.get_data()
-    t2.set_data(data)
-    input = t1.newick() + '\n' + t2.newick()
-    with open(fh, 'w') as f:
-        f.write(input)
-    cmd = 'java -jar jj.jar -o /dev/stdout {}'.format(fh)
-    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-
-    comps = output.decode().strip().split()
-    # print(comps)
-
-    return float(comps[-1])
+def fr_norm_squared(arr):
+    return np.sum(arr**2)
 
 
 def bhv_distance_owens_list(trees1, trees2, fh='tmpbhv.txt'):
@@ -39,6 +28,7 @@ def bhv_distance_owens_list(trees1, trees2, fh='tmpbhv.txt'):
     output, error = process.communicate()
 
     comps = [line.strip().split() for line in output.decode().strip().split('\n')]
+    os.remove(fh)
 
     # TODO: remove temporary files
     return [float(c[-1]) for c in comps]
