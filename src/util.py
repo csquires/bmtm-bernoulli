@@ -1,41 +1,44 @@
 import numpy as np
+import subprocess
 
-'''Utility functions for the command line scripts'''
-def pow_of_2(c):
-    if c == 2:
-        return True
-    if c < 2:
-        return False
-    return c % 2 == 0 and pow_of_2(c//2)
+from src.tree import Tree
 
-
-def max_var(data):
-    new_l = list(data) + [0]
-    print('newl', new_l)
-    return 3*(max(abs(a-b)**2 for a in new_l for b in new_l)**2)
-
-def lin(m):
-    return [b for a in m for b in a]
-
-def fr_norm_sq(one, two):
-    return sum((a-b)**2 for a, b in zip(lin(one), lin(two)))
-    
-def fr_norm_sq_one(one):
-    return sum((a)**2 for a in lin(one))
 
 def operator_norm(arr):
     return np.linalg.norm(np.array(arr), 2)
 
-def is_data_invalid(data):
-    return any(abs(a-b) < .005 for i, a in enumerate(data) for b in data[i+1:]) or any(abs(a) < .005 for a in data)
+
+def bhv_distance_owens(t1: Tree, t2: Tree, fh='tmpbhv.txt'):
+    data = t1.get_data()
+    t2.set_data(data)
+    input = t1.newick() + '\n' + t2.newick()
+    with open(fh, 'w') as f:
+        f.write(input)
+    cmd = 'java -jar jj.jar -o /dev/stdout {}'.format(fh)
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    comps = output.decode().strip().split()
+    # print(comps)
+
+    return float(comps[-1])
 
 
+def bhv_distance_owens_list(trees1, trees2, fh='tmpbhv.txt'):
+    for tree1, tree2 in zip(trees1, trees2):
+        tree2.set_data(tree1.get_data())
+    
+    trees1_newick = [tree.newick() for tree in trees1]
+    trees2_newick = [tree.newick() for tree in trees2]
+    inputs = [t1_newick + '\n' + t2_newick for t1_newick, t2_newick in zip(trees1_newick, trees2_newick)]
+    input = '\n'.join(inputs)
+    with open(fh, 'w') as f:
+        f.write(input)
+    cmd = 'java -jar jj.jar -o /dev/stdout {}'.format(fh)
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
 
-def gen_cmds(vs, ad):
-    if len(vs) == 0:
-        return [ad]
-    k, vals = vs[0]
-    ret = []
-    for v in vals:
-        ret.extend(gen_cmds(vs[1:], ad+['--'+k, str(v)]))
-    return ret
+    comps = [line.strip().split() for line in output.decode().strip().split('\n')]
+
+    # TODO: remove temporary files
+    return [float(c[-1]) for c in comps]

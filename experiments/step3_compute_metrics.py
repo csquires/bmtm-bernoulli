@@ -20,8 +20,8 @@ for nleaves in nleaves_list:
         results = algorithm_runner.load_results(base_filename=f'{estimator}_{nleaves}_covariance')
         results_dict[(estimator, nleaves)] = results
 
-plot_manager = MetricsManager(config)
-plot_manager.compute_and_save_metrics(results_dict, datasets_dict)
+metrics_manager = MetricsManager(config)
+metrics_manager.compute_and_save_metrics(results_dict, datasets_dict)
 
 
 

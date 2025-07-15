@@ -8,7 +8,7 @@ from tqdm import trange
 import numpy as np
 
 from src.bmtm_mle_algorithm import our_mle
-from src.baseline_algorithms import neighbor_joining_algorithm, upgma_algorithm, least_squares_algorithm, ddgm_mle_algorithm, linear_tree_zero_algorithm
+from src.baseline_algorithms import neighbor_joining_algorithm, upgma_algorithm, least_squares_algorithm, ddgm_mle_algorithm
 from src.shrinkage import mxshrink, ledoitwolfvalidshrink, fo_shrink
 from experiment_utils.config_manager import ConfigManager
 

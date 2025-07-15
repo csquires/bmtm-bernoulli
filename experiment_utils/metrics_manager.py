@@ -2,7 +2,9 @@ import pickle
 
 import numpy as np
 from tqdm import trange
+
 from experiment_utils.config_manager import ConfigManager
+from src.util import bhv_distance_owens, bhv_distance_owens_list
 
 
 class MetricsManager:
@@ -14,6 +16,7 @@ class MetricsManager:
         estimators = self.config.get_reconstruction_config().get('estimators')
 
         frob_errors_dict = dict()
+        bhv_distances_dict = dict()
         for nleaves in nleaves_list:
             dataset = datasets_dict[nleaves]
             ground_truths = dataset['ground_truths']
@@ -21,15 +24,20 @@ class MetricsManager:
 
             for estimator in estimators:
                 results = results_dict[(estimator, nleaves)]
-                # estimated_trees = results['estimated_trees']
+                estimated_trees = results['estimated_trees']
                 estimated_covs = results['estimated_covs']
                 
                 print(f"Computing metrics for {estimator} on {nleaves} leaves")
                 frob_errors = self._compute_frob_errors(estimated_covs, ground_truth_covs)
                 frob_errors_dict[(estimator, nleaves)] = frob_errors
-        
+
+                if estimator != "mxshrink":
+                    bhv_distances = self._compute_bhv_distances(estimated_trees, ground_truths)
+                    bhv_distances_dict[(estimator, nleaves)] = bhv_distances
+            
         metrics_dict = dict(
-            frob_errors_dict=frob_errors_dict
+            frob_errors_dict=frob_errors_dict,
+            bhv_distances_dict=bhv_distances_dict
         )
         return metrics_dict
     
@@ -50,3 +58,10 @@ class MetricsManager:
             errors.append(np.sum(diff**2))
         return errors
     
+    def _compute_bhv_distances(self, estimated_trees, ground_truths):
+        distances = bhv_distance_owens_list(estimated_trees, ground_truths)
+        # distances = []
+        # for i in trange(len(estimated_trees)):
+            # bhv_distance = bhv_distance_owens(estimated_trees[i], ground_truths[i])
+            # distances.append(bhv_distance)
+        return distances
