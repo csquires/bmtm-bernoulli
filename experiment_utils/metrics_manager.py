@@ -85,4 +85,7 @@ class MetricsManager:
 
     def _compute_frob_variances(self, estimated_covs, ground_truth_covs):
         mean_estimated_cov = np.mean(estimated_covs, axis=0)
-        return None
+        variances = np.array([
+            fr_norm_squared(estimated_cov - mean_estimated_cov) for estimated_cov in estimated_covs
+        ])
+        return variances

@@ -17,23 +17,34 @@ nleaves_list = config.get_sampling_config().get('nleaves_list')
 estimators = config.get_reconstruction_config().get('estimators')
 
 plot_manager = PlotManager(config, estimators, nleaves_list)
+
+# === FIGURE 9 ===
 plot_manager.plot_errorbars(
     frob_errors_dict, 
     ylabel="estimator risk (Frobenius squared)", 
     filename="frob_errors.png",
     yscale='log'
 )
+# === FIGURE 10 ===
 plot_manager.plot_errorbars(
     bhv_distances_dict, 
     ylabel="estimator risk (BHV distance)", 
     filename="bhv_distances.png",
     yscale='log'
 )
+
+# === FIGURE 8 ===
 plot_manager = PlotManager(config, ["bmtm-mle", "ddgm-mle"], nleaves_list)
 plot_manager.plot_errorbars(
     frob_biases_dict, 
-    ylabel="estimator risk (Frobenius bias)", 
+    ylabel="estimator bias (Frobenius squared)", 
     filename="frob_biases.png",
+    yscale='log'
+)
+plot_manager.plot_errorbars(
+    frob_variances_dict, 
+    ylabel="estimator variance (Frobenius squared)", 
+    filename="frob_variance.png",
     yscale='log'
 )
 # plot_manager.plot_errorbars(
