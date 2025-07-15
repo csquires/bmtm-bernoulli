@@ -1,0 +1,52 @@
+# Example experiment configuration
+# This shows how to customize the default configuration for specific experiments
+
+sampling:
+  num_trials: 1000
+  seed: 1729
+  nleaves_list:
+    - 4
+    - 8
+    - 16
+    - 32
+  normalize: 1
+  random_fo: 0
+  random_method: "exponentialultrametric"
+  constant: 0
+  randomize_vars: 1
+
+tree:
+  type: "bin"
+  structure: "0-0-0"
+  vars: "0-100-100-100"
+
+reconstruction:
+  format: "covariance"
+  estimators:
+    - "bmtm-mle"
+    - "ddgm-mle"
+    - "one-third-shrink"
+    - "upgma"
+    - "neighbor-joining"
+    - "least-squares"
+    # - "linear-shrink"
+    - "mxshrink"
+
+experiment:
+  start: 3
+  end: 8
+  recompute_reconstruct: 1
+  recompute_sample: 0
+
+output:
+  y_log: 1
+  jitter: 0.08
+  display: "risk"
+
+paths:
+  data_dir: "experiments/data"
+  output_dir: "experiments/results"
+  metrics_file: "experiments/metrics.pkl"
+  figures_dir: "experiments/figures"
+  sample_prefix: "sample_series"
+  reconstruct_prefix: "reconstruct_series" 
