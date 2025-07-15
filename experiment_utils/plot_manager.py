@@ -34,6 +34,7 @@ class PlotManager:
         errorbars_dict = self._compute_errorbars(errors_dict)
         jitter = 0.08
         plt.clf()
+        plt.style.use('style.mplstyle')
         xs = np.arange(self.nsizes)
         for e_ix, estimator in enumerate(self.estimators):
             means = errorbars_dict[estimator][0]
@@ -56,4 +57,4 @@ class PlotManager:
         figures_dir = self.config.get_paths_config().get('figures_dir')
         os.makedirs(figures_dir, exist_ok=True)
         figure_filename = figures_dir + f'/{filename}'
-        plt.savefig(figure_filename)
+        plt.savefig(figure_filename, bbox_inches='tight')

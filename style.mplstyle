@@ -1,0 +1,4 @@
+# Font sizes
+axes.labelsize: 14      # Font size for axis labels (e.g., xlabel, ylabel)
+xtick.labelsize: 12     # Font size for x-axis tick labels
+ytick.labelsize: 12     # Font size for y-axis tick labels

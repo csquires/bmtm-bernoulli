@@ -431,51 +431,6 @@ class Tree:
     def mle_set(self, var):
         return self.set_var(var)
     
-    def mle(self, method='trust-constr', max_var=30, accept=-100, maxiter=500, lam=0, global_param_space=None):
-        def is_singular(args):
-            #args = [self.top]+list(args)[1:] # del
-
-            self.mle_set(args)
-            return int(self.is_singular())
-
-        def opt(args):
-            #args = [self.top]+list(args)[1:] # del
-            
-            if any(a < 0 for a in args):
-                return -LOW_NUMBER 
-
-            self.mle_set(args)
-            ll = self.likelihood()
-            if lam != 0:
-                #print(lam*sum(a**2 for a in self.get_var()), ll)
-                ll -= lam*sum(a**2 for a in self.get_var())
-            return -1*ll # min to max
-
-        size = self.mle_size()
-        starting = [random.uniform(-1, 1) for _ in range(size)]
-        bnds = tuple((0, None) for _ in range(size))
-        #bnds = tuple((None, None) for _ in range(size))
-        cons = ({'type': 'ineq', 'fun': is_singular},)
-        #print(bnds, cons)
-
-        # Various optimization methods
-        if global_param_space is None:
-            global_param_space = tuple((0, max_var) for _ in range(size))
-        if method == 'dual_annealing':
-            res = optimize.dual_annealing(opt, global_param_space, accept=accept, maxiter=maxiter, initial_temp=10000)
-        elif method == 'differential_evolution':
-            res = optimize.differential_evolution(opt, global_param_space)
-        elif method == 'basinhopping':
-            res = optimize.basinhopping(opt, starting)
-        else:
-            res = optimize.minimize(opt, starting, method=method, bounds=bnds, constraints=cons)
-
-        #res2 = [self.top]+list(res.x)[1:] # del
-        #self.set_var(res2)
-        self.mle_set(res.x)
-        return res.x
-        #return res2
-    
     def is_observed_node(self, eps=EPSILON):
         if len(self.children) == 0:
             return True
@@ -560,7 +515,6 @@ if __name__ == '__main__':
     tree.make_prefix([2, 0, 0, 2, 0, 0])
     tree.set_data([1, 2, 5, 4])
     assert(tree.is_fully_observed())
-    print(tree.mle(method='differential_evolution'))
     print(tree.likelihood())
     print(tree.get_var())
     assert(False)
