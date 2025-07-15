@@ -17,8 +17,6 @@ class PlotManager:
     def _compute_errorbars(self, errors_dict):
         errorbars_dict = dict()
         for e_ix, estimator in enumerate(self.estimators):
-            if estimator == "mxshrink":
-                continue
             means = np.zeros(self.nsizes)
             error_mat = np.zeros((2, self.nsizes))
             for x, nleaves in enumerate(self.nleaves_list):
@@ -32,21 +30,22 @@ class PlotManager:
             errorbars_dict[estimator] = (means, error_mat)
         return errorbars_dict
 
-    def plot_errorbars(self, errors_dict, ylabel, filename, yscale='linear'):
+    def plot_errorbars(self, errors_dict, ylabel, filename, yscale='linear', legend_right=False):
         errorbars_dict = self._compute_errorbars(errors_dict)
         jitter = 0.08
         plt.clf()
         xs = np.arange(self.nsizes)
         for e_ix, estimator in enumerate(self.estimators):
-            if estimator == "mxshrink":
-                continue
             means = errorbars_dict[estimator][0]
             errors = errorbars_dict[estimator][1]
             plt.errorbar(xs + e_ix * jitter, means, yerr=errors, label=estimator, fmt="o", capsize=5)
 
         # === OTHER ===
-        plt.legend()
         plt.yscale(yscale)
+        if legend_right:
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        else:
+            plt.legend()
 
         # === AXIS LABELS ===
         plt.xticks(xs + jitter * self.num_estimators / 2, self.nleaves_list)
