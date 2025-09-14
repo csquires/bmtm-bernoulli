@@ -4,3 +4,6 @@ venv/
 experiments/data/
 experiments/results/
 .vscode/
+experiments/preliminary/data
+experiments/preliminary/results
+**.pyc

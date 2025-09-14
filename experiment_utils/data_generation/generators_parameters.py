@@ -33,7 +33,6 @@ class RandomParameterGenerator:
             for i in range(nt.num_leaf_nodes()):
                 leaf = nt.get_leaf(i)
                 leaf.above_var += 0.01
-        
         return nt
     
     def _normalize_tree(self, tree: Tree) -> Tree:

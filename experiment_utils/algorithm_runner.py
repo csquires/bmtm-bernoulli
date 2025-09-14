@@ -3,6 +3,7 @@ Reconstruct covariance matrix given samples
 '''
 import os
 import pickle
+from copy import deepcopy
 
 from tqdm import trange
 import numpy as np
@@ -25,51 +26,54 @@ class AlgorithmRunner:
         samples = dataset["samples"]
         structures = dataset["structures"]
         num_trials = len(ground_truths)
+        num_replicates = len(samples[0])
 
         guesses = []
-        estimated_trees = []
-        estimated_covs = []
+        estimated_trees = [[] for _ in range(num_trials)]
+        estimated_covs = [[] for _ in range(num_trials)]
         for i in trange(num_trials):
-            tree_structure = structures[i]
-            sample_vector = samples[i]
-            ground_truth_tree = ground_truths[i]
+            
+            for j in range(num_replicates):
+                tree_structure = deepcopy(structures[i])
+                ground_truth_tree = deepcopy(ground_truths[i])
+                sample_vector = samples[i][j]
 
-            est_cov = None
-            if self.estimator == 'gt':
-                guesses.append(ground_truths[-1])
-            # === OUR ALGORITHM (AND SHRINKAGE VARIANTS) ===
-            elif self.estimator == 'bmtm-mle':
-                est_tree = our_mle(sample_vector, tree_structure)
-            elif self.estimator == 'one-third-shrink':
-                original_est_tree = our_mle(sample_vector, tree_structure)
-                est_tree = fo_shrink(original_est_tree)
-            elif self.estimator == 'mxshrink':
-                original_est_tree = our_mle(sample_vector, tree_structure)
-                original_est_cov = np.array(original_est_tree.cov_matrix())
-                est_cov = mxshrink(original_est_cov)
-                est_tree = None
-            elif self.estimator == 'linear-shrink':
-                original_est_tree = our_mle(sample_vector, tree_structure)
-                est_tree = ledoitwolfvalidshrink(original_est_tree, ground_truth_tree)
-            # === BASELINE ALGORITHMS (NO TREE STRUCTURE) ===
-            elif self.estimator == 'upgma':
-                est_tree = upgma_algorithm(sample_vector)
-            elif self.estimator == 'neighbor-joining':
-                est_tree = neighbor_joining_algorithm(sample_vector)
-            elif self.estimator == 'ddgm-mle':  # DDGM MLE
-                est_tree = ddgm_mle_algorithm(sample_vector)
-            # === BASELINE ALGORITHMS (WITH TREE STRUCTURE) ===
-            elif self.estimator == 'least-squares':
-                est_tree = least_squares_algorithm(sample_vector, tree_structure)
-            
-            else:
-                print(self.estimator)
-                raise ValueError('No match in estimator!')
-            
-            if est_cov is None:
-                est_cov = np.array(est_tree.cov_matrix())
-            estimated_trees.append(est_tree)
-            estimated_covs.append(est_cov)
+                est_cov = None
+                if self.estimator == 'gt':
+                    guesses.append(ground_truths[-1])
+                # === OUR ALGORITHM (AND SHRINKAGE VARIANTS) ===
+                elif self.estimator == 'bmtm-mle':
+                    est_tree = our_mle(sample_vector, tree_structure)
+                elif self.estimator == 'one-third-shrink':
+                    original_est_tree = our_mle(sample_vector, tree_structure)
+                    est_tree = fo_shrink(original_est_tree)
+                elif self.estimator == 'mxshrink':
+                    original_est_tree = our_mle(sample_vector, tree_structure)
+                    original_est_cov = np.array(original_est_tree.cov_matrix())
+                    est_cov = mxshrink(original_est_cov)
+                    est_tree = None
+                elif self.estimator == 'linear-shrink':
+                    original_est_tree = our_mle(sample_vector, tree_structure)
+                    est_tree = ledoitwolfvalidshrink(original_est_tree, ground_truth_tree)
+                # === BASELINE ALGORITHMS (NO TREE STRUCTURE) ===
+                elif self.estimator == 'upgma':
+                    est_tree = upgma_algorithm(sample_vector)
+                elif self.estimator == 'neighbor-joining':
+                    est_tree = neighbor_joining_algorithm(sample_vector)
+                elif self.estimator == 'ddgm-mle':  # DDGM MLE
+                    est_tree = ddgm_mle_algorithm(sample_vector)
+                # === BASELINE ALGORITHMS (WITH TREE STRUCTURE) ===
+                elif self.estimator == 'least-squares':
+                    est_tree = least_squares_algorithm(sample_vector, tree_structure)
+                
+                else:
+                    print(self.estimator)
+                    raise ValueError('No match in estimator!')
+                
+                if est_cov is None:
+                    est_cov = np.array(est_tree.cov_matrix())
+                estimated_trees[i].append(deepcopy(est_tree))
+                estimated_covs[i].append(deepcopy(est_cov))
             
         return estimated_trees, estimated_covs
     
@@ -86,6 +90,8 @@ class AlgorithmRunner:
         os.makedirs(outdir, exist_ok=True)
         with open(outfile, 'wb') as f:
             pickle.dump(results, f)
+
+        return results
 
     def load_results(self, base_filename):
         outdir = self.config.get_paths_config().get('output_dir')

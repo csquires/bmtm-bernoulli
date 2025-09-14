@@ -1,5 +1,6 @@
 import pickle
 
+from copy import deepcopy
 import numpy as np
 from tqdm import tqdm
 
@@ -55,6 +56,7 @@ class MetricsManager:
         metrics_dict = self._compute_metrics(results_dict, datasets_dict)
         filename = self.config.get_paths_config().get('metrics_file')
         pickle.dump(metrics_dict, open(filename, 'wb'))
+        return metrics_dict
 
     def load_metrics(self):
         filename = self.config.get_paths_config().get('metrics_file')
@@ -62,26 +64,53 @@ class MetricsManager:
         return metrics_dict
 
     def _compute_frob_errors(self, estimated_covs, ground_truth_covs):
-        errors = []
-        for i in range(len(estimated_covs)):
-            diff = estimated_covs[i] - ground_truth_covs[i]
-            errors.append(np.sum(diff**2))
+        num_trials = len(estimated_covs)
+        num_replicates = len(estimated_covs[0])
+        errors = np.zeros(num_trials)
+        for i in range(num_trials):
+            diffs = [(estimated_covs[i][j] - ground_truth_covs[i]) for j in range(num_replicates)]
+            errors_replicates = [fr_norm_squared(diff) for diff in diffs]
+            errors[i] = np.mean(errors_replicates)
         return errors
     
     def _compute_bhv_distances(self, estimated_trees, ground_truths):
-        distances = bhv_distance_owens_list(estimated_trees, ground_truths)
+        num_trials = len(estimated_trees)
+        num_replicates = len(estimated_trees[0])
+
+        # calculate on flattened versions
+        ground_truths_replicated = []
+        for ground_truth in ground_truths:
+            for _ in range(num_replicates):
+                ground_truths_replicated.append(deepcopy(ground_truth))
+        estimated_trees_flat = []
+        for estimated_tree_trial in estimated_trees:
+            for estimated_tree in estimated_tree_trial:
+                estimated_trees_flat.append(estimated_tree)
+        distances_flat = bhv_distance_owens_list(estimated_trees_flat, ground_truths_replicated)
+
+        # unflatten
+        distances = np.zeros(num_trials)
+        for i in range(num_trials):
+            distances_replicates = [distances_flat[i*num_replicates+j] for j in range(num_replicates)]
+            distances[i] = np.mean(distances_replicates)
         return distances
     
     def _compute_frob_biases(self, estimated_covs, ground_truth_covs):
-        mean_estimated_cov = np.mean(estimated_covs, axis=0)
-        biases = np.array([
-            fr_norm_squared(mean_estimated_cov - true_cov) for true_cov in ground_truth_covs
-        ])
+        num_trials = len(estimated_covs)
+        num_replicates = len(estimated_covs[0])
+        biases = np.zeros(num_trials)
+        for i in range(num_trials):
+            mean_estimated_cov = np.mean(estimated_covs[i], axis=0)
+            biases[i] = fr_norm_squared(mean_estimated_cov - ground_truth_covs[i])
         return biases
 
     def _compute_frob_variances(self, estimated_covs, ground_truth_covs):
-        mean_estimated_cov = np.mean(estimated_covs, axis=0)
-        variances = np.array([
-            fr_norm_squared(estimated_cov - mean_estimated_cov) for estimated_cov in estimated_covs
-        ])
+        num_trials = len(estimated_covs)
+        num_replicates = len(estimated_covs[0])
+        variances = np.zeros(num_trials)
+        for i in range(num_trials):
+            mean_estimated_cov = np.mean(estimated_covs[i], axis=0)
+            diffs_from_mean = [estimated_covs[i][j] - mean_estimated_cov for j in range(num_replicates)]
+            fr_norm_squareds = [fr_norm_squared(diff) for diff in diffs_from_mean]
+            variances[i] = np.mean(fr_norm_squareds)
         return variances

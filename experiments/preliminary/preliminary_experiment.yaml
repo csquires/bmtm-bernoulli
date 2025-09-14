@@ -3,6 +3,7 @@
 
 sampling:
   num_trials: 1000
+  num_replicates: 30
   seed: 1729
   nleaves_list:
     - 4
@@ -25,12 +26,6 @@ reconstruction:
   estimators:
     - "bmtm-mle"
     - "ddgm-mle"
-    - "one-third-shrink"
-    - "upgma"
-    - "neighbor-joining"
-    - "least-squares"
-    # - "linear-shrink"
-    - "mxshrink"
 
 experiment:
   start: 3
@@ -44,9 +39,9 @@ output:
   display: "risk"
 
 paths:
-  data_dir: "experiments/data"
-  output_dir: "experiments/results"
-  metrics_file: "experiments/metrics.pkl"
-  figures_dir: "experiments/figures"
+  data_dir: "experiments/preliminary/data"
+  output_dir: "experiments/preliminary/results"
+  metrics_file: "experiments/preliminary/metrics.pkl"
+  figures_dir: "experiments/preliminary/figures"
   sample_prefix: "sample_series"
   reconstruct_prefix: "reconstruct_series" 

@@ -3,7 +3,7 @@ from experiment_utils.config_manager import ConfigManager
 from experiment_utils.algorithm_runner import AlgorithmRunner
 
 
-config = ConfigManager('experiments/main_experiment.yaml')
+config = ConfigManager('experiments/preliminary/preliminary_experiment.yaml')
 generation_manager = GenerationManager(config)
 
 nleaves_list = config.get_sampling_config().get('nleaves_list')
@@ -13,7 +13,7 @@ for nleaves in nleaves_list:
     for estimator in estimators:
         algorithm_runner = AlgorithmRunner(config, estimator)
         print(f"Running {estimator} on {nleaves} leaves")
-        guesses = algorithm_runner.run_and_save(dataset, base_filename=f'{estimator}_{nleaves}_covariance')
+        results_dict = algorithm_runner.run_and_save(dataset, base_filename=f'{estimator}_{nleaves}_covariance')
 
 
 

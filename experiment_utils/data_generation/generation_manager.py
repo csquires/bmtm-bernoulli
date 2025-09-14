@@ -45,7 +45,8 @@ class GenerationManager:
 
         # === SAMPLES ===
         print(f"Generating data...")
-        samples = [tree.sample_data() for tree in ground_truths]
+        num_replicates = self.sampling_config.get('num_replicates')
+        samples = [[tree.sample_data() for _ in range(num_replicates)] for tree in ground_truths]
 
         return ground_truths, samples, structures
     
