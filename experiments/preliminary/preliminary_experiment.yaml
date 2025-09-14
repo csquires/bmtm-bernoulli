@@ -2,7 +2,7 @@
 # This shows how to customize the default configuration for specific experiments
 
 sampling:
-  num_trials: 1000
+  num_trials: 100
   num_replicates: 30
   seed: 1729
   nleaves_list:
