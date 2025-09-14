@@ -1,12 +1,18 @@
 
 ## Replicating experiments
-To replicate the experiments, run the following four files:
+To replicate the main experiments (Figures 9 and 10), run the following four files:
 1. `python3 experiments/step1_generate_data.py`
 2. `python3 experiments/step2_run_algorithms.py`
 3. `python3 experiments/step3_compute_metrics.py`
 4. `python3 experiments/step4_plot_metrics.py`
 
 Step 1 creates synthetic data, which is saved in `experiments/data/`. Step 2 runs the estimators on this data and saves the results in `experiments/results/`. Step 3 computes the metrics reported in the paper, such as Frobenius error and BHV distance, and saves them in `experiments/metrics.pkl`. Step 4 handles plotting and saves the figures in `experiments/figures/`.
+
+Similarly, to replicate the preliminary experiments, run the following four files:
+1. `python3 experiments/preliminary/step1_generate_data.py`
+2. `python3 experiments/preliminary/step2_run_algorithms.py`
+3. `python3 experiments/preliminary/step3_compute_metrics.py`
+4. `python3 experiments/preliminary/step4_plot_metrics.py`
 
 
 ## Overview of file structure
